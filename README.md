@@ -1,6 +1,6 @@
 # Module-Lattice Digital Signature Algorithm.
 A lightweight, portable  and MISRA C:2012–oriented implementation of the ML-DSA
-## Goals ** 
+## Goals 
 Pure C implementation with no external dependencies
 Portable across embedded platforms
 MISRA C:2012 compliant design

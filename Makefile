@@ -1,27 +1,88 @@
-CC       := gcc
-CFLAGS   := -Wall -Wextra -O2 -std=c11
-LDFLAGS  := -lcrypto
+TARGET      := ml-dsa
 
-TARGET   := ml-dsa
-SRC_DIR  := .
-OBJ_DIR  := obj
-INC_DIR  := .
+SRC_DIR     := src
+INC_DIR     := include
+OBJ_DIR     := build/obj
+BIN_DIR     := build/bin
 
-SRCS     := $(wildcard $(SRC_DIR)/*.c)
-OBJS     := $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+BUILD       ?= generic      # generic | stm32
 
-all: $(TARGET)
+CC          ?= gcc
+AR          ?= ar
 
-$(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS)
+RM          := rm -rf
+MKDIR       := mkdir -p
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -I $(INC_DIR) -c $< -o $@
+CSTD        := -std=c99
+OPT         ?= -O2
+
+WARNINGS := \
+    -Wall \
+    -Wextra \
+    -Wpedantic \
+    -Wshadow \
+    -Wconversion
+
+CPPFLAGS := \
+    -I$(INC_DIR) \
+    -I$(SRC_DIR) \
+    -I$(SRC_DIR)/math \
+    -MMD \
+    -MP
+
+CFLAGS := \
+    $(CSTD) \
+    $(WARNINGS) \
+    $(OPT)
+
+LDFLAGS :=
+LDLIBS  :=
+
+ifeq ($(BUILD),stm32)
+
+CC := arm-none-eabi-gcc
+AR := arm-none-eabi-ar
+
+CPUFLAGS := \
+    -mcpu=cortex-m4 \
+    -mthumb
+
+CFLAGS += $(CPUFLAGS)
+
+endif
+
+LIB_SRCS := $(shell find $(SRC_DIR) -name "*.c")
+
+APP_SRCS := $(wildcard example/generic/*.c)
+
+SRCS := \
+    $(LIB_SRCS) \
+    $(APP_SRCS)
+
+OBJS := $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRCS))
+DEPS := $(OBJS:.o=.d)
+
+all: $(BIN_DIR)/$(TARGET)
+
+$(BIN_DIR)/$(TARGET): $(OBJS)
+	@$(MKDIR) $(BIN_DIR)
+	$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS)
+
+$(OBJ_DIR)/%.o: %.c
+	@$(MKDIR) $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(OBJ_DIR) $(TARGET)
+	$(RM) build
 
 rebuild: clean all
 
-.PHONY: all clean rebuild
+print:
+	@echo "Compiler : $(CC)"
+	@echo "Build    : $(BUILD)"
+	@echo "Sources:"
+	@printf "  %s\n" $(SRCS)
+
+-include $(DEPS)
+
+.PHONY: all clean rebuild print

@@ -33,7 +33,7 @@ u32 modq_sub (u32 a, u32 b, u32 q)
 u32 modq_mul(u32 a, u32 b, u32 q)
 {
     u64 ret_val = 0;
-    ret_val = (u64) a * (u64) b ;
+    ret_val = (u64) a * (u64) b;
     ret_val %= (u64)q;
     return (u32)ret_val;
 }

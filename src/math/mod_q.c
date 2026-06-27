@@ -16,7 +16,7 @@ u32 modq_add(u32 a, u32 b, u32 q)
     }
     return ret_val;
 }
-static u32 sub_mod (u32 a, u32 b, u32 q)
+u32 modq_sub (u32 a, u32 b, u32 q)
 {
     u32 ret_val = 0;
     if (a >= b)
@@ -30,7 +30,7 @@ static u32 sub_mod (u32 a, u32 b, u32 q)
     return ret_val;
 }
 
-static u32 mul_mod(u32 a, u32 b, u32 q)
+u32 modq_mul(u32 a, u32 b, u32 q)
 {
     u64 ret_val = 0;
     ret_val = (u64) a * (u64) b ;

@@ -8,8 +8,8 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
-/* Defines */
 
-/* Function prototypes */
+#define MOD_Q (7)
+#define MOD_N (256)
 
 #endif  // PARAMS_H

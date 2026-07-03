@@ -4,7 +4,7 @@
  * @author Nghia Huynh AKA Txn
  * @date 2026-06-27
  */
-#include "modq.h"
+#include "math/mod_q.h"
 
 u32 modq_add(u32 a, u32 b, u32 q)
 {

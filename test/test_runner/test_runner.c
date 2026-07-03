@@ -5,63 +5,114 @@
  * @date 2026-06-27
 */
 #include <stdio.h>
-#include "test_runner.h"
+#include "test/test_runner/test_runner.h"
 
-static test_case_t *g_tests[MAX_TEST_CASES];
-static uint32_t g_test_num = 0;
-static uint32_t g_pass = 0;
-static uint32_t g_fail = 0;
+#include <stdio.h>
+#include <string.h>
 
-int32_t test_reg(const test_case_t *test)
+#define MAX_SUITES    (64U)
+
+static const test_suite_t *g_suites[MAX_SUITES];
+static uint32_t g_suite_count = 0U;
+
+void test_runner_add_suite(const test_suite_t *suite)
 {
-    int32_t ret_val = 0;
-    if(test == NULL || g_test_num >= MAX_TEST_CASES)
+    if ((suite == NULL) || (g_suite_count >= MAX_SUITES))
     {
-        ret_val = -1;
+        return;
     }
-    else 
-    {
-        g_tests[g_test_num] = test;
-        g_test_num++;
-        ret_val = 1;
-    }
-    return ret_val;
+
+    g_suites[g_suite_count++] = suite;
 }
 
-int32_t test_unreg(const test_case_t *test)
+int test_runner_run_test(const char *suite_name,
+                         const char *test_name)
 {
-    int32_t ret_val = -1; 
+    uint32_t i;
+    uint32_t j;
 
-    if (test != NULL)
+    for (i = 0U; i < g_suite_count; i++)
     {
-        uint32_t i = 0U;
-        uint32_t found_idx = MAX_TEST_CASES;
+        const test_suite_t *suite = g_suites[i];
 
-        
-        for (i = 0U; i < g_test_num; i++)
+        if (strcmp(suite->name, suite_name) != 0)
         {
-            if (g_tests[i] == test)
-            {
-                found_idx = i;
-                ret_val = 1; 
-                break;       
-            }
+            continue;
         }
 
-        
-        if (ret_val == 1)
+        for (j = 0U; j < suite->count; j++)
         {
-            for (i = found_idx; i < (g_test_num - 1U); i++)
+            if (strcmp(suite->tests[j].name, test_name) == 0)
             {
-                g_tests[i] = g_tests[i + 1U];
+                printf("[ RUN ] %s.%s\n",
+                       suite->name,
+                       suite->tests[j].name);
+
+                suite->tests[j].function();
+
+                printf("[ PASS ] %s.%s\n",
+                       suite->name,
+                       suite->tests[j].name);
+
+                return 0;
             }
-            
-            g_test_num--;
-            g_tests[g_test_num] = NULL; 
         }
     }
 
-    return ret_val;
+    return -1;
 }
 
-int32_t test_run_all(void);
+int test_runner_run_suite(const char *suite_name)
+{
+    uint32_t i;
+    uint32_t j;
+
+    for (i = 0U; i < g_suite_count; i++)
+    {
+        const test_suite_t *suite = g_suites[i];
+
+        if (strcmp(suite->name, suite_name) != 0)
+        {
+            continue;
+        }
+
+        printf("\n=== %s ===\n", suite->name);
+
+        for (j = 0U; j < suite->count; j++)
+        {
+            printf("[ RUN ] %s\n", suite->tests[j].name);
+
+            suite->tests[j].function();
+
+            printf("[ PASS ] %s\n", suite->tests[j].name);
+        }
+
+        return 0;
+    }
+
+    return -1;
+}
+
+int test_runner_run_all(void)
+{
+    uint32_t i;
+    uint32_t j;
+
+    for (i = 0U; i < g_suite_count; i++)
+    {
+        const test_suite_t *suite = g_suites[i];
+
+        printf("\n=== %s ===\n", suite->name);
+
+        for (j = 0U; j < suite->count; j++)
+        {
+            printf("[ RUN ] %s\n", suite->tests[j].name);
+
+            suite->tests[j].function();
+
+            printf("[ PASS ] %s\n", suite->tests[j].name);
+        }
+    }
+
+    return 0;
+}

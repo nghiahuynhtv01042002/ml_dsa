@@ -9,17 +9,25 @@
 #define TEST_RUNNER_H
 #include <stdint.h>
 
-#define MAX_TEST_CASES (1024U)
-
 typedef void (*test_fn_t)(void);
 
 typedef struct
 {
     const char *name;
-    test_fn_t fn;
+    test_fn_t function;
 } test_case_t;
 
-int32_t test_reg(const test_case_t *tests);
-int32_t test_run_all(void);
-int32_t test_unreg();
+typedef struct
+{
+    const char *name;
+    const test_case_t *tests;
+    uint32_t count;
+} test_suite_t;
+
+void test_runner_add_suite(const test_suite_t *suite);
+
+int test_runner_run_all(void);
+int test_runner_run_suite(const char *suite_name);
+int test_runner_run_test(const char *suite_name,
+                         const char *test_name);
 #endif // TEST_RUNNER_H

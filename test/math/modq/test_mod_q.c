@@ -1,52 +1,51 @@
 /*
  * @file test_mod_q.c
- * @brief 
+ * @brief Unit tests for modular arithmetic.
  * @author Nghia Huynh AKA Txn
  * @date 2026-06-27
-*/
-#include <stdio.h>
+ */
+
 #include <assert.h>
 
-#include "mod_q.h"
+#include "math/mod_q.h"
+#include "test/test_runner/test_runner.h"
 
 static void test_modq_add(void)
 {
-    u32 q = 17;
+    const u32 q = 17U;
 
-    assert(modq_add(3, 5, q) == 8);
-    assert(modq_add(10, 10, q) == ((10 + 10) % q));
-    assert(modq_add(16, 2, q) == ((16 + 2) % q));
-
-    printf("modq_add OK\n");
+    assert(modq_add(3U, 5U, q) == 8U);
+    assert(modq_add(10U, 10U, q) == ((10U + 10U) % q));
+    assert(modq_add(16U, 2U, q) == ((16U + 2U) % q));
 }
 
 static void test_modq_sub(void)
 {
-    u32 q = 17;
+    const u32 q = 17U;
 
-    assert(modq_sub(10, 3, q) == 7);
-    assert(modq_sub(3, 10, q) == ((3 + q - 10 % q) % q));
-
-    printf("modq_sub OK\n");
+    assert(modq_sub(10U, 3U, q) == 7U);
+    assert(modq_sub(3U, 10U, q) == ((3U + q - (10U % q)) % q));
 }
 
 static void test_modq_mul(void)
 {
-    u32 q = 17;
+    const u32 q = 17U;
 
-    assert(modq_mul(3, 5, q) == 15);
-    assert(modq_mul(4, 5, q) == ((4 * 5) % q));
-    assert(modq_mul(16, 16, q) == ((16 * 16) % q));
-
-    printf("modq_mul OK\n");
+    assert(modq_mul(3U, 5U, q) == 15U);
+    assert(modq_mul(4U, 5U, q) == ((4U * 5U) % q));
+    assert(modq_mul(16U, 16U, q) == ((16U * 16U) % q));
 }
 
-int main(void)
+const test_case_t g_mod_q_tests[] =
 {
-    test_modq_add();
-    test_modq_sub();
-    test_modq_mul();
+    { "add", test_modq_add },
+    { "sub", test_modq_sub },
+    { "mul", test_modq_mul }
+};
 
-    printf("ALL modq tests PASSED\n");
-    return 0;
-}
+const test_suite_t g_mod_q_suite =
+{
+    .name  = "mod_q",
+    .tests = g_mod_q_tests,
+    .count = (uint32_t)(sizeof(g_mod_q_tests) / sizeof(g_mod_q_tests[0]))
+};

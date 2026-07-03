@@ -1,20 +1,18 @@
-TARGET      := ml-dsa
+SRC_DIR := src
+INC_DIR := include
 
-SRC_DIR     := src
-INC_DIR     := include
-OBJ_DIR     := build/obj
-BIN_DIR     := build/bin
+OBJ_DIR := build/obj
+BIN_DIR := build/bin
+LIB_DIR := build/lib
 
-BUILD       ?= generic      # generic | stm32
+CC ?= gcc
+AR ?= ar
 
-CC          ?= gcc
-AR          ?= ar
+RM := rm -rf
+MKDIR := mkdir -p
+FIND := find
 
-RM          := rm -rf
-MKDIR       := mkdir -p
-
-CSTD        := -std=c99
-OPT         ?= -O2
+CSTD := -std=c99
 
 WARNINGS := \
     -Wall \
@@ -23,12 +21,12 @@ WARNINGS := \
     -Wshadow \
     -Wconversion
 
+OPT ?= -O2
+
 CPPFLAGS := \
+    -I. \
     -I$(INC_DIR) \
-    -I$(SRC_DIR) \
-    -I$(SRC_DIR)/math \
-    -MMD \
-    -MP
+    -I$(SRC_DIR)
 
 CFLAGS := \
     $(CSTD) \
@@ -36,41 +34,49 @@ CFLAGS := \
     $(OPT)
 
 LDFLAGS :=
-LDLIBS  :=
+LDLIBS :=
 
-ifeq ($(BUILD),stm32)
+LIB_SRCS := $(shell $(FIND) $(SRC_DIR) -name '*.c')
 
-CC := arm-none-eabi-gcc
-AR := arm-none-eabi-ar
+EXAMPLE_SRCS := $(shell $(FIND) example -name '*.c')
 
-CPUFLAGS := \
-    -mcpu=cortex-m4 \
-    -mthumb
+TEST_SRCS := $(shell $(FIND) test -name '*.c')
 
-CFLAGS += $(CPUFLAGS)
+LIB_OBJS := $(patsubst %.c,$(OBJ_DIR)/%.o,$(LIB_SRCS))
 
-endif
+EXAMPLE_OBJS := \
+    $(patsubst %.c,$(OBJ_DIR)/%.o,$(EXAMPLE_SRCS))
 
-LIB_SRCS := $(shell find $(SRC_DIR) -name "*.c")
+TEST_OBJS := \
+    $(patsubst %.c,$(OBJ_DIR)/%.o,$(TEST_SRCS))
 
-APP_SRCS := $(wildcard example/generic/*.c)
+LIBRARY := $(LIB_DIR)/lib$(PROJECT).a
 
-SRCS := \
-    $(LIB_SRCS) \
-    $(APP_SRCS)
+EXAMPLE := $(BIN_DIR)/example
 
-OBJS := $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRCS))
-DEPS := $(OBJS:.o=.d)
+TEST := $(BIN_DIR)/test
 
-all: $(BIN_DIR)/$(TARGET)
+all: example
 
-$(BIN_DIR)/$(TARGET): $(OBJS)
+example: $(EXAMPLE)
+
+test: $(TEST)
+
+$(LIBRARY): $(LIB_OBJS)
+	@$(MKDIR) $(LIB_DIR)
+	$(AR) rcs $@ $^
+
+$(EXAMPLE): $(LIBRARY) $(EXAMPLE_OBJS)
 	@$(MKDIR) $(BIN_DIR)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS) $(LDLIBS)
+	$(CC) $(EXAMPLE_OBJS) $(LIBRARY) -o $@ $(LDFLAGS) $(LDLIBS)
+
+$(TEST): $(LIBRARY) $(TEST_OBJS)
+	@$(MKDIR) $(BIN_DIR)
+	$(CC) $(TEST_OBJS) $(LIBRARY) -o $@ $(LDFLAGS) $(LDLIBS)
 
 $(OBJ_DIR)/%.o: %.c
 	@$(MKDIR) $(dir $@)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
 
 clean:
 	$(RM) build
@@ -78,11 +84,19 @@ clean:
 rebuild: clean all
 
 print:
-	@echo "Compiler : $(CC)"
-	@echo "Build    : $(BUILD)"
-	@echo "Sources:"
-	@printf "  %s\n" $(SRCS)
+	@echo "Library Sources"
+	@printf "  %s\n" $(LIB_SRCS)
+	@echo
+	@echo "Example Sources"
+	@printf "  %s\n" $(EXAMPLE_SRCS)
+	@echo
+	@echo "Test Sources"
+	@printf "  %s\n" $(TEST_SRCS)
+
+DEPS := $(LIB_OBJS:.o=.d)
+DEPS += $(EXAMPLE_OBJS:.o=.d)
+DEPS += $(TEST_OBJS:.o=.d)
 
 -include $(DEPS)
 
-.PHONY: all clean rebuild print
+.PHONY: all example test clean rebuild print

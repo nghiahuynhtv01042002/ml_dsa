@@ -37,3 +37,27 @@ u32 modq_mul(u32 a, u32 b, u32 q)
     ret_val %= (u64)q;
     return (u32)ret_val;
 }
+
+u32 modq_pow(u32 base, u32 exp, u32 q)
+{
+    u32 result = 1U;
+
+    while (exp > 0U)
+    {
+        if (exp & 1U)
+        {
+            result = modq_mul(result, base, q);
+        }
+        base = modq_mul(base, base, q);
+        exp >>= 1U;
+    }
+
+    return result;
+}
+/* fermat theorem */
+u32 modq_inv(u32 a, u32 q)
+{
+    return modq_pow(a, q - 2U, q);
+}
+
+
